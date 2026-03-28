@@ -31,16 +31,25 @@ async function main() {
   console.log('✅ تم إنشاء الفئات');
 
   // Create locations
-  const locations = await Promise.all([
-    prisma.location.create({ data: { name: 'المخزن الرئيسي', type: 'STORAGE', description: 'المخزن العام للكلية' } }),
-    prisma.location.create({ data: { name: 'مكتب العميد', type: 'OFFICE' } }),
-    prisma.location.create({ data: { name: 'مكتب نائب العميد', type: 'OFFICE' } }),
-    prisma.location.create({ data: { name: 'الأمانة العامة', type: 'OFFICE' } }),
-    prisma.location.create({ data: { name: 'قاعة المحاضرات 1', type: 'HALL' } }),
-    prisma.location.create({ data: { name: 'قاعة المحاضرات 2', type: 'HALL' } }),
-    prisma.location.create({ data: { name: 'المكتبة', type: 'OFFICE' } }),
-    prisma.location.create({ data: { name: 'قاعة الحاسوب', type: 'HALL' } }),
-  ]);
+  const locations = [
+    { name: 'المخزن الرئيسي', type: 'STORAGE', description: 'المخزن العام للكلية' },
+    { name: 'مكتب العميد', type: 'OFFICE' },
+    { name: 'مكتب نائب العميد', type: 'OFFICE' },
+    { name: 'الأمانة العامة', type: 'OFFICE' },
+    { name: 'قاعة المحاضرات 1', type: 'HALL' },
+    { name: 'قاعة المحاضرات 2', type: 'HALL' },
+    { name: 'المكتبة', type: 'OFFICE' },
+    { name: 'قاعة الحاسوب', type: 'HALL' },
+  ];
+  const createdLocations = [];
+  for (const loc of locations) {
+    const created = await prisma.location.upsert({
+      where: { name: loc.name },
+      update: {},
+      create: loc
+    });
+    createdLocations.push(created);
+  }
   console.log('✅ تم إنشاء المواقع');
 
   // Create sample items
@@ -56,8 +65,13 @@ async function main() {
   ];
 
   for (const item of items) {
-    await prisma.item.create({ data: item });
+    await prisma.item.upsert({
+      where: { id: item.name },
+      update: {},
+      create: item
+    });
   }
+  
   console.log('✅ تم إنشاء الوسائل الأولية');
 
   console.log('\n🎉 تمت تهيئة قاعدة البيانات بنجاح!');
