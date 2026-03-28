@@ -3,6 +3,17 @@ const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
+async function safeCreate(model, data) {
+  try {
+    return await model.create({ data });
+  } catch (error) {
+    if (data.name) {
+      return await model.findFirst({ where: { name: data.name } });
+    }
+    return null;
+  }
+}
+
 async function main() {
   console.log('🌱 بدء تهيئة قاعدة البيانات...');
 
@@ -30,8 +41,8 @@ async function main() {
   ]);
   console.log('✅ تم إنشاء الفئات');
 
-  // Create locations
-  const locations = [
+  // Create locations safely
+  const locationsData = [
     { name: 'المخزن الرئيسي', type: 'STORAGE', description: 'المخزن العام للكلية' },
     { name: 'مكتب العميد', type: 'OFFICE' },
     { name: 'مكتب نائب العميد', type: 'OFFICE' },
@@ -41,18 +52,15 @@ async function main() {
     { name: 'المكتبة', type: 'OFFICE' },
     { name: 'قاعة الحاسوب', type: 'HALL' },
   ];
-  const createdLocations = [];
-  for (const loc of locations) {
-    const created = await prisma.location.upsert({
-      where: { name: loc.name },
-      update: {},
-      create: loc
-    });
-    createdLocations.push(created);
+
+  const locations = [];
+  for (const loc of locationsData) {
+    const created = await safeCreate(prisma.location, loc);
+    if (created) locations.push(created);
   }
   console.log('✅ تم إنشاء المواقع');
 
-  // Create sample items
+  // Create sample items safely
   const items = [
     { name: 'حاسوب مكتبي HP', quantity: 15, categoryId: categories[1].id, locationId: locations[0].id, unit: 'جهاز', condition: 'GOOD' },
     { name: 'طاولة مكتب', quantity: 8, categoryId: categories[0].id, locationId: locations[0].id, unit: 'قطعة', condition: 'GOOD' },
@@ -65,13 +73,8 @@ async function main() {
   ];
 
   for (const item of items) {
-    await prisma.item.upsert({
-      where: { id: item.name },
-      update: {},
-      create: item
-    });
+    await safeCreate(prisma.item, item);
   }
-  
   console.log('✅ تم إنشاء الوسائل الأولية');
 
   console.log('\n🎉 تمت تهيئة قاعدة البيانات بنجاح!');
