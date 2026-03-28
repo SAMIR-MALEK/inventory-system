@@ -1,0 +1,156 @@
+// This is your Prisma schema file
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions Transaction[]
+  inventories  Inventory[]
+
+  @@map("users")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+
+  items Item[]
+
+  @@map("categories")
+}
+
+model Location {
+  id          String       @id @default(cuid())
+  name        String
+  type        LocationType
+  description String?
+  createdAt   DateTime     @default(now())
+
+  items         Item[]
+  fromTransfers Transaction[] @relation("FromLocation")
+  toTransfers   Transaction[] @relation("ToLocation")
+  inventories   Inventory[]
+
+  @@map("locations")
+}
+
+enum LocationType {
+  STORAGE    // مخزن
+  OFFICE     // مكتب
+  HALL       // قاعة
+}
+
+model Item {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  serialNumber String?  @unique
+  quantity     Int      @default(0)
+  minQuantity  Int      @default(1)
+  unit         String   @default("قطعة")
+  condition    Condition @default(GOOD)
+  categoryId   String
+  locationId   String
+  purchaseDate DateTime?
+  purchasePrice Float?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  category     Category      @relation(fields: [categoryId], references: [id])
+  location     Location      @relation(fields: [locationId], references: [id])
+  transactions Transaction[]
+  inventoryItems InventoryItem[]
+
+  @@map("items")
+}
+
+enum Condition {
+  GOOD        // جيد
+  FAIR        // مقبول
+  POOR        // رديء
+  DAMAGED     // تالف
+}
+
+model Transaction {
+  id           String          @id @default(cuid())
+  type         TransactionType
+  quantity     Int
+  notes        String?
+  date         DateTime        @default(now())
+  itemId       String
+  userId       String
+  fromLocationId String?
+  toLocationId   String?
+  createdAt    DateTime        @default(now())
+
+  item         Item      @relation(fields: [itemId], references: [id])
+  user         User      @relation(fields: [userId], references: [id])
+  fromLocation Location? @relation("FromLocation", fields: [fromLocationId], references: [id])
+  toLocation   Location? @relation("ToLocation", fields: [toLocationId], references: [id])
+
+  @@map("transactions")
+}
+
+enum TransactionType {
+  PURCHASE    // شراء
+  DISTRIBUTE  // توزيع
+  TRANSFER    // تحويل
+  RETURN      // إرجاع
+  DISPOSAL    // إتلاف
+}
+
+model Inventory {
+  id         String    @id @default(cuid())
+  locationId String
+  userId     String
+  date       DateTime  @default(now())
+  notes      String?
+  status     InventoryStatus @default(DRAFT)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  location   Location  @relation(fields: [locationId], references: [id])
+  user       User      @relation(fields: [userId], references: [id])
+  items      InventoryItem[]
+
+  @@map("inventories")
+}
+
+enum InventoryStatus {
+  DRAFT       // مسودة
+  COMPLETED   // مكتمل
+}
+
+model InventoryItem {
+  id           String    @id @default(cuid())
+  inventoryId  String
+  itemId       String
+  expectedQty  Int
+  actualQty    Int
+  notes        String?
+
+  inventory    Inventory @relation(fields: [inventoryId], references: [id])
+  item         Item      @relation(fields: [itemId], references: [id])
+
+  @@map("inventory_items")
+}
