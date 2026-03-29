@@ -1,4 +1,3 @@
-// This is your Prisma schema file
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,7 +12,7 @@ model User {
   name      String
   email     String   @unique
   password  String
-  role      Role     @default(USER)
+  role      String   @default("USER")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -21,11 +20,6 @@ model User {
   inventories  Inventory[]
 
   @@map("users")
-}
-
-enum Role {
-  ADMIN
-  USER
 }
 
 model Category {
@@ -42,7 +36,7 @@ model Category {
 model Location {
   id          String       @id @default(cuid())
   name        String
-  type        LocationType
+  type        String
   description String?
   createdAt   DateTime     @default(now())
 
@@ -54,12 +48,6 @@ model Location {
   @@map("locations")
 }
 
-enum LocationType {
-  STORAGE    // مخزن
-  OFFICE     // مكتب
-  HALL       // قاعة
-}
-
 model Item {
   id           String   @id @default(cuid())
   name         String
@@ -68,7 +56,7 @@ model Item {
   quantity     Int      @default(0)
   minQuantity  Int      @default(1)
   unit         String   @default("قطعة")
-  condition    Condition @default(GOOD)
+  condition    String   @default("GOOD")
   categoryId   String
   locationId   String
   purchaseDate DateTime?
@@ -84,16 +72,9 @@ model Item {
   @@map("items")
 }
 
-enum Condition {
-  GOOD        // جيد
-  FAIR        // مقبول
-  POOR        // رديء
-  DAMAGED     // تالف
-}
-
 model Transaction {
   id           String          @id @default(cuid())
-  type         TransactionType
+  type         String
   quantity     Int
   notes        String?
   date         DateTime        @default(now())
@@ -111,21 +92,13 @@ model Transaction {
   @@map("transactions")
 }
 
-enum TransactionType {
-  PURCHASE    // شراء
-  DISTRIBUTE  // توزيع
-  TRANSFER    // تحويل
-  RETURN      // إرجاع
-  DISPOSAL    // إتلاف
-}
-
 model Inventory {
   id         String    @id @default(cuid())
   locationId String
   userId     String
   date       DateTime  @default(now())
   notes      String?
-  status     InventoryStatus @default(DRAFT)
+  status     String    @default("DRAFT")
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
@@ -134,11 +107,6 @@ model Inventory {
   items      InventoryItem[]
 
   @@map("inventories")
-}
-
-enum InventoryStatus {
-  DRAFT       // مسودة
-  COMPLETED   // مكتمل
 }
 
 model InventoryItem {
