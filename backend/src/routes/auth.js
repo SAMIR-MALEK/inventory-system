@@ -31,7 +31,7 @@ router.post('/login', async (req, res) => {
     if (error.name === 'ZodError') {
       return res.status(400).json({ success: false, message: error.errors[0].message });
     }
-    res.status(500).json({ success: false, message: 'خطأ في الخادم' });
+    res.status(500).json({ success: false, message: 'خطأ في الخادم', error: error.message });
   }
 });
 
